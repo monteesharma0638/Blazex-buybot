@@ -5,9 +5,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getDextoolToken = exports.getDextoolPair = exports.getTokenPrice = exports.get_token_price_and_marketcap = exports.getBinancePriceEth = exports.getBinancePriceBNB = exports.getCurrencyPrice = exports.sendTelegramMessageWithPhoto = exports.sendTelegramMessage = exports.BASE_TELEGRAM_URL = exports.TELEGRAM_CHAT_ID = exports.TELEGRAM_TOKEN = void 0;
 const axios_1 = __importDefault(require("axios"));
+const path_1 = __importDefault(require("path"));
+const fs_1 = __importDefault(require("fs"));
+const imageBuffer = fs_1.default.readFileSync(path_1.default.resolve(path_1.default.join(__dirname, "../media.mov")));
+let fileId = null;
 // Telegram settings
-exports.TELEGRAM_TOKEN = '6427892218:AAEavoC3hfIzhaGJMSL3GkUUBMH0BvXfzVY';
-exports.TELEGRAM_CHAT_ID = '-1001510752049';
+exports.TELEGRAM_TOKEN = '5955086198:AAH78PYdgk1oaA6Ig6M0q9YOR6g4drtl5KY';
+// export const TELEGRAM_CHAT_ID = '-1001510752049'; // Group Blazex
+exports.TELEGRAM_CHAT_ID = '-1001884609064'; // Group Blazex Official
 exports.BASE_TELEGRAM_URL = `https://api.telegram.org/bot${exports.TELEGRAM_TOKEN}/sendMessage`;
 async function sendTelegramMessage(message) {
     const data = {
@@ -26,20 +31,22 @@ async function sendTelegramMessage(message) {
     }
 }
 exports.sendTelegramMessage = sendTelegramMessage;
-sendTelegramMessageWithPhoto("some test message with photo");
 async function sendTelegramMessageWithPhoto(message) {
     const telegramBotToken = exports.TELEGRAM_TOKEN;
     const chatId = exports.TELEGRAM_CHAT_ID;
-    const url = `https://api.telegram.org/bot${telegramBotToken}/sendPhoto`;
+    const url = `https://api.telegram.org/bot${telegramBotToken}/sendVideo`;
     const formData = new FormData();
     formData.append('chat_id', chatId);
+    formData.append('parse_mode', "Markdown");
     formData.append('caption', message);
-    formData.append('photo', "https://i.ibb.co/QCHy3hD/IMG-0468.jpg");
+    formData.append('supports_streaming', "true");
+    formData.append('video', fileId || new Blob([imageBuffer]));
     const response = await fetch(url, {
         method: 'POST',
         body: formData,
     });
     const responseData = await response.json();
+    fileId = responseData?.result?.video?.file_id || null;
     console.log('Message sent:', responseData);
 }
 exports.sendTelegramMessageWithPhoto = sendTelegramMessageWithPhoto;

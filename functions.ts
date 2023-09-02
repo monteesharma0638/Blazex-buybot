@@ -1,9 +1,16 @@
 import axios, { Axios, AxiosError, AxiosResponse } from "axios";
 import { Chain } from "./constants";
+import path from 'path';
+import fs from "fs";
+const imageBuffer = fs.readFileSync(path.resolve(path.join(__dirname, "../media.mov")));
+
+
+let fileId: string | null = null;
 
 // Telegram settings
-export const TELEGRAM_TOKEN = '6427892218:AAEavoC3hfIzhaGJMSL3GkUUBMH0BvXfzVY';
-export const TELEGRAM_CHAT_ID = '-1001510752049';
+export const TELEGRAM_TOKEN = '5955086198:AAH78PYdgk1oaA6Ig6M0q9YOR6g4drtl5KY';
+// export const TELEGRAM_CHAT_ID = '-1001510752049'; // Group Blazex
+export const TELEGRAM_CHAT_ID = '-1001884609064'; // Group Blazex Official
 export const BASE_TELEGRAM_URL = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
 
 export async function sendTelegramMessage(message: string) {
@@ -23,17 +30,18 @@ export async function sendTelegramMessage(message: string) {
     }
 }
 
-sendTelegramMessageWithPhoto("some test message with photo");
-
 export async function sendTelegramMessageWithPhoto(message: string) {
     const telegramBotToken = TELEGRAM_TOKEN;
     const chatId = TELEGRAM_CHAT_ID;
 
-    const url = `https://api.telegram.org/bot${telegramBotToken}/sendPhoto`;
+    const url = `https://api.telegram.org/bot${telegramBotToken}/sendVideo`;
     const formData = new FormData();
     formData.append('chat_id', chatId);
+    formData.append('parse_mode', "Markdown");
     formData.append('caption', message);
-    formData.append('photo', "https://i.ibb.co/QCHy3hD/IMG-0468.jpg");
+    formData.append('supports_streaming', "true");
+
+    formData.append('video', fileId || new Blob([imageBuffer]));
 
     const response = await fetch(url, {
         method: 'POST',
@@ -41,6 +49,7 @@ export async function sendTelegramMessageWithPhoto(message: string) {
     });
 
     const responseData = await response.json();
+    fileId = responseData?.result?.video?.file_id || null;
     console.log('Message sent:', responseData);
     
 }

@@ -29,27 +29,28 @@ async function setListeners(constant, index) {
         }
         if (amount0In > 0 && amount1Out > 0 && to !== constant.tokenAddress) {
             const marketCap = dextoolsToken[index].data.metrics.totalSupply * dextoolsToken[index].data.reprPair.price;
-            const blazexAmount = ethers_1.ethers.formatUnits(amount1Out, 9);
+            const blazexAmount = ethers_1.ethers.formatUnits(amount1Out, constant.tokenDecimals);
             const ethAmount = ethers_1.ethers.formatEther(amount0In);
             const usdPrice = await (0, functions_1.getCurrencyPrice)(constant.priceApi);
             const usdAmount = Number(ethAmount) * Number(usdPrice);
             const truncatedAddress = `${to.slice(0, 6)}...${to.slice(-4)}`;
             const transactionHash = event.log.transactionHash;
             const nowBalance = await token.balanceOf(to);
-            const previousBalance = nowBalance - amount1Out;
+            const previousBalance = Number(ethers_1.ethers.formatUnits(nowBalance, constant.tokenDecimals)) - Number(ethers_1.ethers.formatUnits(amount1Out, constant.tokenDecimals));
             const blazexPrice = (Number(ethAmount) / Number(blazexAmount)) * Number(usdPrice);
             let position = 0, newHolderString = "";
-            if (previousBalance > 0n) {
+            if (previousBalance <= 0n) {
                 newHolderString = '*✅ New Holder*\n';
+                position = 100;
             }
             else {
-                position = (Number(ethers_1.ethers.formatUnits(amount1Out, constant.tokenDecimals)) / Number(ethers_1.ethers.formatUnits(previousBalance, constant.tokenDecimals))) * 100;
+                position = (Number(nowBalance) / Number(previousBalance)) * 100;
             }
             if (position > 1000) {
                 position = 1000;
             }
             let emojis = "";
-            for (let i = 0; i <= usdAmount / 50; i++) {
+            for (let i = 0; i < usdAmount / 25; i++) {
                 if (index === 1) {
                     emojis += "🔥";
                 }
@@ -68,13 +69,13 @@ async function setListeners(constant, index) {
                 `*🔷 ETH BlazeX Price: ${(dextoolsToken[0].data.reprPair.price).toFixed(8)}*\n` +
                 `*🔶 BSC BlazeX Price: ${(dextoolsToken[1].data.reprPair.price).toFixed(8)}*\n\n` +
                 `*Contract:* \`${constant.tokenAddress}\`\n\n` +
-                `🥇 [Chart](https://blazex.org)              ✨ [BlazeX Hub](https://T.me/BlazeXHub)\n` +
+                `🥇 [Chart](${index === 0 ? "https://www.dextools.io/app/en/ether/pair-explorer/0x6c110c11238c5d3389ea3c480eb7f23a7be909d9" : "https://www.dextools.io/app/en/bnb/pair-explorer/0x0032ce6eba91a996688addc0dcd56c691c7b613d"})              ✨ [BlazeX Hub](https://T.me/BlazeXHub)\n` +
                 `🤖 [Deployer](https://T.me/BlazeXDeployerBot)       ❌ [Twitter](https://Twitter.com/BlazeXCoin)`);
-            (0, functions_1.sendTelegramMessageWithPhoto)(baseMessage);
+            await (0, functions_1.sendTelegramMessageWithPhoto)(baseMessage);
         }
     });
     setTimeout(() => {
         provider.websocket.close();
         setListeners(constant, index);
-    }, 60000);
+    }, 180000);
 }
