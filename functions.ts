@@ -23,6 +23,28 @@ export async function sendTelegramMessage(message: string) {
     }
 }
 
+sendTelegramMessageWithPhoto("some test message with photo");
+
+export async function sendTelegramMessageWithPhoto(message: string) {
+    const telegramBotToken = TELEGRAM_TOKEN;
+    const chatId = TELEGRAM_CHAT_ID;
+
+    const url = `https://api.telegram.org/bot${telegramBotToken}/sendPhoto`;
+    const formData = new FormData();
+    formData.append('chat_id', chatId);
+    formData.append('caption', message);
+    formData.append('photo', "https://i.ibb.co/QCHy3hD/IMG-0468.jpg");
+
+    const response = await fetch(url, {
+        method: 'POST',
+        body: formData,
+    });
+
+    const responseData = await response.json();
+    console.log('Message sent:', responseData);
+    
+}
+
 
 export async function getCurrencyPrice(URL: string) {
 

@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getDextoolToken = exports.getDextoolPair = exports.getTokenPrice = exports.get_token_price_and_marketcap = exports.getBinancePriceEth = exports.getBinancePriceBNB = exports.getCurrencyPrice = exports.sendTelegramMessage = exports.BASE_TELEGRAM_URL = exports.TELEGRAM_CHAT_ID = exports.TELEGRAM_TOKEN = void 0;
+exports.getDextoolToken = exports.getDextoolPair = exports.getTokenPrice = exports.get_token_price_and_marketcap = exports.getBinancePriceEth = exports.getBinancePriceBNB = exports.getCurrencyPrice = exports.sendTelegramMessageWithPhoto = exports.sendTelegramMessage = exports.BASE_TELEGRAM_URL = exports.TELEGRAM_CHAT_ID = exports.TELEGRAM_TOKEN = void 0;
 const axios_1 = __importDefault(require("axios"));
 // Telegram settings
 exports.TELEGRAM_TOKEN = '6427892218:AAEavoC3hfIzhaGJMSL3GkUUBMH0BvXfzVY';
@@ -26,6 +26,23 @@ async function sendTelegramMessage(message) {
     }
 }
 exports.sendTelegramMessage = sendTelegramMessage;
+sendTelegramMessageWithPhoto("some test message with photo");
+async function sendTelegramMessageWithPhoto(message) {
+    const telegramBotToken = exports.TELEGRAM_TOKEN;
+    const chatId = exports.TELEGRAM_CHAT_ID;
+    const url = `https://api.telegram.org/bot${telegramBotToken}/sendPhoto`;
+    const formData = new FormData();
+    formData.append('chat_id', chatId);
+    formData.append('caption', message);
+    formData.append('photo', "https://i.ibb.co/QCHy3hD/IMG-0468.jpg");
+    const response = await fetch(url, {
+        method: 'POST',
+        body: formData,
+    });
+    const responseData = await response.json();
+    console.log('Message sent:', responseData);
+}
+exports.sendTelegramMessageWithPhoto = sendTelegramMessageWithPhoto;
 async function getCurrencyPrice(URL) {
     try {
         const response = await axios_1.default.get(URL);

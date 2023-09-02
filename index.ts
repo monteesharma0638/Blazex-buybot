@@ -1,6 +1,6 @@
 import { WebSocketProvider, ethers, JsonRpcProvider } from "ethers";
 import constants, { Chain } from "./constants";
-import { DextoolsToken, getCurrencyPrice, getDextoolToken, getTokenPrice, get_token_price_and_marketcap, sendTelegramMessage } from "./functions";
+import { DextoolsToken, getCurrencyPrice, getDextoolToken, sendTelegramMessageWithPhoto } from "./functions";
 import { UniswapPair__factory } from "./types/ethers-contracts/factories/UniswapPair__factory";
 import { Blazex__factory } from "./types/ethers-contracts";
 
@@ -22,7 +22,7 @@ async function setListeners(constant: Chain, index: number) {
     const pair = UniswapPair__factory.connect(constant.pair, provider);
     const token = Blazex__factory.connect(constant.tokenAddress, httpProvider);
 
-    pair.on(pair.filters["Swap(address,uint256,uint256,uint256,uint256,address)"], async (sender, amount0In, amount1In, amount0Out, amount1Out, to, event) => {
+    pair.on(pair.filters["Swap(address,uint256,uint256,uint256,uint256,address)"], async (sender, amount0In, amount1In, amount0Out, amount1Out, to, event: unknown) => {
         console.log(event);
         const data = await getDextoolToken(constant);
         if(data){
@@ -36,7 +36,7 @@ async function setListeners(constant: Chain, index: number) {
             const usdPrice = await getCurrencyPrice(constant.priceApi)
             const usdAmount = Number(ethAmount) * Number(usdPrice);
             const truncatedAddress = `${to.slice(0, 6)}...${to.slice(-4)}`;
-            const transactionHash = event.transactionHash;
+            const transactionHash = (event as ethers.ContractEventPayload).log.transactionHash;
             const nowBalance = await token.balanceOf(to);
             const previousBalance = nowBalance - amount1Out;
 
@@ -44,21 +44,30 @@ async function setListeners(constant: Chain, index: number) {
 
 
             let position = 0, newHolderString = "";
-            if (previousBalance === 0n) {
+            if (previousBalance !> 0n) {
                 newHolderString = '*✅ New Holder*\n';
             } else {
-                position = (Number(amount1Out) / Number(previousBalance)) * 100;
+                position = (Number(ethers.formatUnits(amount1Out, constant.tokenDecimals)) / Number(ethers.formatUnits(previousBalance, constant.tokenDecimals))) * 100;
             }
             if (position > 1000) {
                 position = 1000;
             }
 
+            let emojis: string = "";
+            for(let i:number =0; i <= usdAmount/50; i++){
+                if(index === 1){
+                    emojis += "🔥";
+                }
+                else {
+                    emojis += "🤖";
+                }
+            }
 
             const baseMessage = (
-                `*BlazeX Buy!*\n🔥\n\n` +
+                `*BlazeX Buy!*\n${emojis}\n\n` +
                 `*💵 ${parseFloat(ethAmount).toFixed(4)} ${constant.currency} ($${(usdAmount).toFixed(2)})*\n` +
                 `*🪙 ${parseFloat(blazexAmount).toFixed(0)} BlazeX*\n` +
-                `🔸 [${truncatedAddress}](${constant.explorer}/address/${to}) | [Txn](${constant.explorer}/tx/${transactionHash})\n` +
+                `${index?"🔸":"🔹"} [${truncatedAddress}](${constant.explorer}/address/${to}) | [Txn](${constant.explorer}/tx/${transactionHash})\n` +
                 `*🔼 Position +${position.toFixed(2)}%*\n` +
                 `*💲Price: ${blazexPrice.toFixed(8)}*\n` +
                 `*Market Cap $${marketCap? marketCap.toFixed(2): "N/A"}\n\n*` +
@@ -70,7 +79,7 @@ async function setListeners(constant: Chain, index: number) {
                 `🤖 [Deployer](https://T.me/BlazeXDeployerBot)       ❌ [Twitter](https://Twitter.com/BlazeXCoin)`
             );
 
-            sendTelegramMessage(baseMessage);
+            sendTelegramMessageWithPhoto(baseMessage);
         }
     })
 

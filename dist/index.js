@@ -34,24 +34,33 @@ async function setListeners(constant, index) {
             const usdPrice = await (0, functions_1.getCurrencyPrice)(constant.priceApi);
             const usdAmount = Number(ethAmount) * Number(usdPrice);
             const truncatedAddress = `${to.slice(0, 6)}...${to.slice(-4)}`;
-            const transactionHash = event.transactionHash;
+            const transactionHash = event.log.transactionHash;
             const nowBalance = await token.balanceOf(to);
             const previousBalance = nowBalance - amount1Out;
             const blazexPrice = (Number(ethAmount) / Number(blazexAmount)) * Number(usdPrice);
             let position = 0, newHolderString = "";
-            if (previousBalance === 0n) {
+            if (previousBalance > 0n) {
                 newHolderString = '*✅ New Holder*\n';
             }
             else {
-                position = (Number(amount1Out) / Number(previousBalance)) * 100;
+                position = (Number(ethers_1.ethers.formatUnits(amount1Out, constant.tokenDecimals)) / Number(ethers_1.ethers.formatUnits(previousBalance, constant.tokenDecimals))) * 100;
             }
             if (position > 1000) {
                 position = 1000;
             }
-            const baseMessage = (`*BlazeX Buy!*\n🔥\n\n` +
+            let emojis = "";
+            for (let i = 0; i <= usdAmount / 50; i++) {
+                if (index === 1) {
+                    emojis += "🔥";
+                }
+                else {
+                    emojis += "🤖";
+                }
+            }
+            const baseMessage = (`*BlazeX Buy!*\n${emojis}\n\n` +
                 `*💵 ${parseFloat(ethAmount).toFixed(4)} ${constant.currency} ($${(usdAmount).toFixed(2)})*\n` +
                 `*🪙 ${parseFloat(blazexAmount).toFixed(0)} BlazeX*\n` +
-                `🔸 [${truncatedAddress}](${constant.explorer}/address/${to}) | [Txn](${constant.explorer}/tx/${transactionHash})\n` +
+                `${index ? "🔸" : "🔹"} [${truncatedAddress}](${constant.explorer}/address/${to}) | [Txn](${constant.explorer}/tx/${transactionHash})\n` +
                 `*🔼 Position +${position.toFixed(2)}%*\n` +
                 `*💲Price: ${blazexPrice.toFixed(8)}*\n` +
                 `*Market Cap $${marketCap ? marketCap.toFixed(2) : "N/A"}\n\n*` +
@@ -61,7 +70,7 @@ async function setListeners(constant, index) {
                 `*Contract:* \`${constant.tokenAddress}\`\n\n` +
                 `🥇 [Chart](https://blazex.org)              ✨ [BlazeX Hub](https://T.me/BlazeXHub)\n` +
                 `🤖 [Deployer](https://T.me/BlazeXDeployerBot)       ❌ [Twitter](https://Twitter.com/BlazeXCoin)`);
-            (0, functions_1.sendTelegramMessage)(baseMessage);
+            (0, functions_1.sendTelegramMessageWithPhoto)(baseMessage);
         }
     });
     setTimeout(() => {
